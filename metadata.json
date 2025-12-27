@@ -1,0 +1,7 @@
+{
+  "name": "LuxeStay - Buscador de Hoteles",
+  "description": "Una aplicación de búsqueda de hoteles de alta gama que utiliza la IA de Gemini y Google Maps para encontrar los mejores alojamientos basados en tu ubicación o área deseada.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
