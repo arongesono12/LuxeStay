@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Hotel } from '../types';
 
 interface HotelCardProps {
@@ -10,6 +10,10 @@ interface HotelCardProps {
 }
 
 const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isFavorite, onToggleFavorite }) => {
+  const [showRemovedToast, setShowRemovedToast] = useState(false);
+  const [showAddedToast, setShowAddedToast] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+
   const formatXAF = (priceStr: string) => {
     try {
       const numericPart = priceStr.replace(/[^0-9]/g, '');
@@ -26,11 +30,59 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isFavorite, onTog
     }
   };
 
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Feedback visual inmediato
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 400);
+
+    if (isFavorite) {
+      setShowRemovedToast(true);
+      setShowAddedToast(false);
+    } else {
+      setShowAddedToast(true);
+      setShowRemovedToast(false);
+    }
+    
+    onToggleFavorite(e);
+  };
+
+  useEffect(() => {
+    if (showRemovedToast || showAddedToast) {
+      const timer = setTimeout(() => {
+        setShowRemovedToast(false);
+        setShowAddedToast(false);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [showRemovedToast, showAddedToast]);
+
   return (
     <div 
       onClick={onClick}
-      className="bg-gradient-to-br from-white via-white to-gold-50/40 rounded-[2.5rem] overflow-hidden border border-gold-50 shadow-sm hover:shadow-2xl hover:border-gold-200/50 hover:scale-[1.01] transition-all duration-500 ease-out cursor-pointer group flex flex-col h-full"
+      className="bg-gradient-to-br from-white via-white to-gold-50/40 rounded-[2.5rem] overflow-hidden border border-gold-50 shadow-sm hover:shadow-2xl hover:border-gold-200/50 hover:scale-[1.01] transition-all duration-500 ease-out cursor-pointer group flex flex-col h-full relative"
     >
+      {/* Toast de eliminación */}
+      {showRemovedToast && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[30] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white/90 backdrop-blur-md border border-red-100 px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
+            <i className="fas fa-info-circle text-red-400 text-[10px]"></i>
+            <span className="text-[9px] font-black text-gray-800 uppercase tracking-widest whitespace-nowrap">Eliminado de su colección</span>
+          </div>
+        </div>
+      )}
+
+      {/* Toast de adición */}
+      {showAddedToast && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[30] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white/90 backdrop-blur-md border border-gold-300 px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
+            <i className="fas fa-check-circle text-gold-500 text-[10px]"></i>
+            <span className="text-[9px] font-black text-gray-800 uppercase tracking-widest whitespace-nowrap">Añadido a su colección</span>
+          </div>
+        </div>
+      )}
+
       <div className="relative h-72 overflow-hidden">
         <img 
           src={hotel.image} 
@@ -42,10 +94,19 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isFavorite, onTog
         
         <div className="absolute top-5 right-5 z-10">
           <button 
-            onClick={onToggleFavorite}
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-lg active:scale-90 ${isFavorite ? 'bg-gold-400 text-white shadow-gold-500/50' : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white hover:text-gold-500'}`}
+            onClick={handleFavoriteClick}
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-lg active:scale-75 ${
+              isFavorite 
+                ? 'bg-gold-400 text-white shadow-gold-500/50' 
+                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white hover:text-gold-500'
+            } ${isAnimating ? 'scale-125' : 'scale-100'}`}
           >
-            <i className={`${isFavorite ? 'fas animate-shake' : 'far'} fa-heart text-lg`}></i>
+            <i className={`${isFavorite ? 'fas' : 'far'} fa-heart text-lg ${isAnimating ? 'animate-bounce' : ''} ${isFavorite && !isAnimating ? 'animate-shake' : ''}`}></i>
+            
+            {/* Efecto de brillo al añadir */}
+            {showAddedToast && isAnimating && (
+              <div className="absolute inset-0 rounded-2xl border-2 border-gold-300 animate-ping opacity-75"></div>
+            )}
           </button>
         </div>
         
